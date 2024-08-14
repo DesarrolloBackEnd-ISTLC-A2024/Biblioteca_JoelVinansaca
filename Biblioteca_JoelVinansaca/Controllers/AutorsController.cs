@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Biblioteca_JoelVinansaca.Context;
 using Biblioteca_JoelVinansaca.Models;
+using Biblioteca_JoelVinansaca.DTO;
+
 
 namespace Biblioteca_JoelVinansaca.Controllers
 {
@@ -23,9 +25,25 @@ namespace Biblioteca_JoelVinansaca.Controllers
 
         // GET: api/Autors
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Autor>>> GetAutors()
+        public async Task<ActionResult<IEnumerable<AutorDTO>>> GetAutors()
         {
-            return await _context.Autors.ToListAsync();
+            var list = await _context.Autors.ToListAsync();
+
+            return convierteaDTOAutor(list);
+        }
+
+        private ActionResult<IEnumerable<AutorDTO>> convierteaDTOAutor(List<Autor> list)
+        {
+            List<AutorDTO> result = new List<AutorDTO>();
+            for (int i = 0; i < list.Count; i++)
+            {
+                AutorDTO obj = new AutorDTO();
+                var item = list[i];
+                obj.IdAutor = item.IdAutor;
+                obj.NombreAutor = item.NombreAutor;
+                result.Add(obj);
+            }
+            return result;
         }
 
         // GET: api/Autors/5
@@ -45,14 +63,15 @@ namespace Biblioteca_JoelVinansaca.Controllers
         // PUT: api/Autors/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutAutor(int id, Autor autor)
+        public async Task<IActionResult> PutAutor(int id, AutorDTO autor)
         {
-            if (id != autor.IdAutor)
+            Autor result = transformaDTOaAutor(autor);
+            if (id != result.IdAutor)
             {
                 return BadRequest();
             }
 
-            _context.Entry(autor).State = EntityState.Modified;
+            _context.Entry(result).State = EntityState.Modified;
 
             try
             {
@@ -76,9 +95,10 @@ namespace Biblioteca_JoelVinansaca.Controllers
         // POST: api/Autors
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Autor>> PostAutor(Autor autor)
+        public async Task<ActionResult<Autor>> PostAutor(AutorDTO autor)
         {
-            _context.Autors.Add(autor);
+            Autor result = transformaDTOaAutor(autor);
+            _context.Autors.Add(result);
             try
             {
                 await _context.SaveChangesAsync();
@@ -96,6 +116,16 @@ namespace Biblioteca_JoelVinansaca.Controllers
             }
 
             return CreatedAtAction("GetAutor", new { id = autor.IdAutor }, autor);
+        }
+
+        private Autor transformaDTOaAutor(AutorDTO autor)
+        {
+            Autor obj = new Autor();
+            obj.IdAutor = autor.IdAutor;
+            obj.NombreAutor = autor.NombreAutor;
+            obj.Estado = "A";
+
+            return obj;
         }
 
         // DELETE: api/Autors/5

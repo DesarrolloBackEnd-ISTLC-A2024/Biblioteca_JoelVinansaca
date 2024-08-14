@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Biblioteca_JoelVinansaca.Context;
 using Biblioteca_JoelVinansaca.Models;
+using Biblioteca_JoelVinansaca.DTO;
 
 namespace Biblioteca_JoelVinansaca.Controllers
 {
@@ -23,14 +24,16 @@ namespace Biblioteca_JoelVinansaca.Controllers
 
         // GET: api/Categorias
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Categoria>>> GetCategorias()
+        public async Task<ActionResult<IEnumerable<CategoriaDTO>>> GetCategorias()
         {
-            return await _context.Categorias.ToListAsync();
+            var list = await _context.Categorias.ToListAsync();
+
+            return convierteDTOCategorias(list);
         }
 
         // GET: api/Categorias/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Categoria>> GetCategoria(int id)
+        public async Task<ActionResult<CategoriaDTO>> GetCategoria(int id)
         {
             var categoria = await _context.Categorias.FindAsync(id);
 
@@ -39,20 +42,22 @@ namespace Biblioteca_JoelVinansaca.Controllers
                 return NotFound();
             }
 
-            return categoria;
+            var categoriaDTO = convierteaDTOCategoria(categoria);
+            return categoriaDTO;
         }
 
         // PUT: api/Categorias/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutCategoria(int id, Categoria categoria)
+        public async Task<IActionResult> PutCategoria(int id, CategoriaDTO categoria)
         {
-            if (id != categoria.IdCategoria)
+            Categoria result = transformarDTOaCategoria(categoria);
+            if (id != result.IdCategoria)
             {
                 return BadRequest();
             }
 
-            _context.Entry(categoria).State = EntityState.Modified;
+            _context.Entry(result).State = EntityState.Modified;
 
             try
             {
@@ -76,9 +81,10 @@ namespace Biblioteca_JoelVinansaca.Controllers
         // POST: api/Categorias
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Categoria>> PostCategoria(Categoria categoria)
+        public async Task<ActionResult<Categoria>> PostCategoria(CategoriaDTO categoria)
         {
-            _context.Categorias.Add(categoria);
+            Categoria result = transformarDTOaCategoria(categoria);
+            _context.Categorias.Add(result);
             try
             {
                 await _context.SaveChangesAsync();
@@ -114,6 +120,41 @@ namespace Biblioteca_JoelVinansaca.Controllers
             return NoContent();
         }
 
+        private ActionResult<IEnumerable<CategoriaDTO>> convierteDTOCategorias(List<Categoria> list)
+        {
+            List<CategoriaDTO> result = new List<CategoriaDTO>();
+            for (int i = 0; i < list.Count; i++)
+            {
+                CategoriaDTO obj = new CategoriaDTO();
+                var item = list[i];
+                obj.IdCategoria = item.IdCategoria;
+                obj.DescripcionCategoria = item.DescripcionCategoria;
+
+                result.Add(obj);
+            }
+            return result;
+        }
+
+        private CategoriaDTO convierteaDTOCategoria(Categoria categoria)
+        {
+            CategoriaDTO obj = new CategoriaDTO
+            {
+                IdCategoria = categoria.IdCategoria,
+                DescripcionCategoria = categoria.DescripcionCategoria,
+
+            };
+            return obj;
+        }
+
+        private Categoria transformarDTOaCategoria(CategoriaDTO categoria)
+        {
+            Categoria obj = new Categoria();
+            obj.IdCategoria = categoria.IdCategoria;
+            obj.DescripcionCategoria = categoria.DescripcionCategoria;
+            obj.Estado = "A";
+
+            return obj;
+        }
         private bool CategoriaExists(int id)
         {
             return _context.Categorias.Any(e => e.IdCategoria == id);
